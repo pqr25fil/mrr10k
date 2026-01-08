@@ -1,3 +1,45 @@
+# Waitlist Builder (Next.js + Auth + Stripe)
+
+Минимальный микро‑SaaS: пользователь логинится, создаёт проект с публичной waitlist‑страницей, собирает emails, смотрит аналитику. Подписка **PRO** оформляется через **Stripe** и включается через webhook.
+
+## Запуск локально
+
+1) Установить зависимости:
+
+```bash
+cd waitlist-saas
+npm i
+```
+
+2) Создать `.env`:
+
+```bash
+cp .env.example .env
+openssl rand -base64 32
+```
+
+Вставь значение в `NEXTAUTH_SECRET`, и укажи Stripe ключи/price/webhook secret.
+
+3) Миграции и запуск:
+
+```bash
+npx prisma migrate dev
+npm run dev
+```
+
+## Stripe
+
+- **Checkout**: `POST /api/stripe/checkout` (для залогиненного пользователя)
+- **Billing Portal**: `POST /api/stripe/portal`
+- **Webhook**: `POST /api/stripe/webhook`
+
+Webhook обновляет `User.plan` в БД (FREE/PRO) по событиям подписки.
+
+## Публичные страницы
+
+- `/w/[slug]` — публичная waitlist-страница проекта
+- `POST /api/waitlist/[slug]` — добавить email в лист
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

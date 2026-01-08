@@ -1,8 +1,15 @@
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2024-06-20",
-});
+let cachedStripe: Stripe | null = null;
+
+export function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("Missing env: STRIPE_SECRET_KEY");
+  if (!cachedStripe) {
+    cachedStripe = new Stripe(key, { apiVersion: "2025-12-15.clover" });
+  }
+  return cachedStripe;
+}
 
 export function requireStripeEnv() {
   const required = ["STRIPE_SECRET_KEY", "STRIPE_PRICE_ID"] as const;
