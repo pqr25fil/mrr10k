@@ -8,7 +8,7 @@ import { z, ZodError } from "zod";
 const generateSchema = z.object({
   type: z.enum(["blog", "social", "product", "email", "ad", "seo"]),
   prompt: z.string().min(10, "Промпт должен содержать минимум 10 символов"),
-  tone: z.enum(["professional", "casual", "friendly", "formal"]).optional(),
+  tone: z.enum(["professional", "casual", "friendly", "formal", "creative", "persuasive"]).optional(),
   language: z.enum(["ru", "en"]).default("ru"),
 });
 

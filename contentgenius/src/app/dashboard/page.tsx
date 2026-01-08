@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FileText,
@@ -19,6 +20,7 @@ import {
   Zap,
   RotateCcw,
   Crown,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -51,11 +53,27 @@ export default function DashboardPage() {
 
   const [selectedType, setSelectedType] = useState("blog");
   const [prompt, setPrompt] = useState("");
+  const [tone, setTone] = useState("professional");
+  const [language, setLanguage] = useState("ru");
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [usage, setUsage] = useState<UsageData | null>(null);
+
+  const toneOptions = [
+    { value: "professional", label: "Профессиональный" },
+    { value: "casual", label: "Неформальный" },
+    { value: "friendly", label: "Дружелюбный" },
+    { value: "formal", label: "Официальный" },
+    { value: "creative", label: "Креативный" },
+    { value: "persuasive", label: "Убедительный" },
+  ];
+
+  const languageOptions = [
+    { value: "ru", label: "Русский" },
+    { value: "en", label: "English" },
+  ];
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -96,6 +114,8 @@ export default function DashboardPage() {
         body: JSON.stringify({
           type: selectedType,
           prompt,
+          tone,
+          language,
         }),
       });
 
@@ -123,6 +143,49 @@ export default function DashboardPage() {
     await navigator.clipboard.writeText(generatedContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExport = (format: "txt" | "md" | "html") => {
+    let content = generatedContent;
+    let filename = `content-${Date.now()}`;
+    let mimeType = "text/plain";
+
+    switch (format) {
+      case "md":
+        filename += ".md";
+        mimeType = "text/markdown";
+        break;
+      case "html":
+        content = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сгенерированный контент</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+${generatedContent.replace(/\n/g, "<br>")}
+</body>
+</html>`;
+        filename += ".html";
+        mimeType = "text/html";
+        break;
+      default:
+        filename += ".txt";
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (status === "loading") {
@@ -275,6 +338,29 @@ export default function DashboardPage() {
                   className="min-h-[150px]"
                 />
 
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Тон
+                    </label>
+                    <Select
+                      options={toneOptions}
+                      value={tone}
+                      onChange={(e) => setTone(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Язык
+                    </label>
+                    <Select
+                      options={languageOptions}
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 {error && (
                   <p className="mt-2 text-sm text-red-600">{error}</p>
                 )}
@@ -309,6 +395,7 @@ export default function DashboardPage() {
                       variant="outline"
                       size="sm"
                       onClick={handleCopy}
+                      title="Копировать"
                     >
                       {copied ? (
                         <Check className="h-4 w-4 text-green-500" />
@@ -321,9 +408,39 @@ export default function DashboardPage() {
                       size="sm"
                       onClick={handleGenerate}
                       disabled={isGenerating}
+                      title="Сгенерировать заново"
                     >
                       <RotateCcw className="h-4 w-4" />
                     </Button>
+                    <div className="relative group">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        title="Экспорт"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 min-w-[120px]">
+                        <button
+                          onClick={() => handleExport("txt")}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-violet-50 text-gray-700"
+                        >
+                          Скачать .txt
+                        </button>
+                        <button
+                          onClick={() => handleExport("md")}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-violet-50 text-gray-700"
+                        >
+                          Скачать .md
+                        </button>
+                        <button
+                          onClick={() => handleExport("html")}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-violet-50 text-gray-700"
+                        >
+                          Скачать .html
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
