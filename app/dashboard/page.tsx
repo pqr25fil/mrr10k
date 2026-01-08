@@ -8,12 +8,21 @@ export default async function DashboardPage() {
   
   const user = await prisma.user.findUnique({
     where: { id: session?.user?.id as string },
+    include: {
+      posts: {
+        orderBy: { createdAt: "desc" },
+      },
+    },
   });
 
   // Check subscription validity
   const isPro = user?.stripePriceId && user?.stripeCurrentPeriodEnd?.getTime()! > Date.now();
 
   return (
-    <DashboardClient isPro={!!isPro} />
+    <DashboardClient 
+        isPro={!!isPro} 
+        initialPosts={user?.posts || []} 
+        usageCount={user?.posts.length || 0}
+    />
   );
 }
